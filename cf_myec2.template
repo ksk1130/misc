@@ -1,26 +1,35 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "My standard EC2 template",
+  "Parameters": {
+    "KeyName": {
+      "Type": "String"
+    },
+    "SubnetId": {
+      "Type": "String"
+    },
+    "SGIds": {
+      "Type": "String"
+    }
+  },
   "Resources": {
     "MyEC2instance": {
       "Type": "AWS::EC2::Instance",
       "Properties": {
-        "InstanceType": "t2.micro",
+        "KeyName": {
+          "Ref": "KeyName"
+        },
         "ImageId": "ami-0ff21806645c5e492",
-        "SubnetId": "subnet-01bf116d808cf0009",
+        "InstanceType": "t2.micro",
+        "SubnetId": {
+          "Ref": "SubnetId"
+        },
         "SecurityGroupIds": [
           {
-            "Ref": "MyEC2sg"
+            "Ref": "SGIds"
           }
         ]
       }
-    },
-    "MyEC2sg": {
-      "Type": "AWS::EC2::SecurityGroup",
-      "Properties": {
-        "VpcId": "vpc-079a38b3350ecdbe2",
-        "GroupDescription": "Allow same segment communication"
-      }
     }
-  },
-  "Description": "MyEC2Template"
+  }
 }
