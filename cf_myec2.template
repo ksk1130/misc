@@ -1,7 +1,7 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
   "Resources": {
-    "instancei00e49a4f1634401c5": {
+    "MyEC2Instance": {
       "Type": "AWS::EC2::Instance",
       "Properties": {
         "DisableApiTermination": "false",
@@ -10,23 +10,11 @@
         "InstanceType": "t2.micro",
         "KeyName": "aws_kp01",
         "Monitoring": "false",
-        "NetworkInterfaces": [
-          {
-            "DeleteOnTermination": "true",
-            "Description": "Primary network interface",
-            "DeviceIndex": 0,
-            "SubnetId": {
-              "Ref": "subnet-01bf116d808cf0009"
-            },
-            "GroupSet": [
-              {
-                "Ref": "sg-067a977fc21528f0c"
-              }
-            ]
-          }
+        "SecurityGroupIds": [
+          "sg-067a977fc21528f0c"
         ]
-      }
+      },
+      "Description": "MyEC2"
     }
-  },
-  "Description": "MyEC2"
+  }
 }
