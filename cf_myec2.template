@@ -1,20 +1,26 @@
 {
   "AWSTemplateFormatVersion": "2010-09-09",
   "Resources": {
-    "MyEC2Instance": {
+    "MyEC2instance": {
       "Type": "AWS::EC2::Instance",
       "Properties": {
-        "DisableApiTermination": "false",
-        "InstanceInitiatedShutdownBehavior": "stop",
-        "ImageId": "ami-0ff21806645c5e492",
         "InstanceType": "t2.micro",
-        "KeyName": "aws_kp01",
-        "Monitoring": "false",
+        "ImageId": "ami-0ff21806645c5e492",
+        "SubnetId": "subnet-01bf116d808cf0009",
         "SecurityGroupIds": [
-          "sg-067a977fc21528f0c"
+          {
+            "Ref": "MyEC2sg"
+          }
         ]
-      },
-      "Description": "MyEC2"
+      }
+    },
+    "MyEC2sg": {
+      "Type": "AWS::EC2::SecurityGroup",
+      "Properties": {
+        "VpcId": "vpc-079a38b3350ecdbe2",
+        "GroupDescription": "Allow same segment communication"
+      }
     }
-  }
+  },
+  "Description": "MyEC2Template"
 }
