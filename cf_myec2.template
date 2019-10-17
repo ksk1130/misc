@@ -16,23 +16,17 @@
             "Description": "Primary network interface",
             "DeviceIndex": 0,
             "SubnetId": {
-              "Ref": "subnet0ad0d84a03b6624db"
+              "Ref": "subnet-01bf116d808cf0009"
             },
-            "PrivateIpAddresses": [
-              {
-                "PrivateIpAddress": "192.168.1.20",
-                "Primary": "true"
-              }
-            ],
             "GroupSet": [
               {
-                "Ref": "sgdefault"
+                "Ref": "sg-067a977fc21528f0c"
               }
             ]
           }
         ]
       }
-    },
+    }
+  },
   "Description": "MyEC2"
-}
 }
