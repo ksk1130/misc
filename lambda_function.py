@@ -23,7 +23,8 @@ def start_natgw(Subnet, is_production):
 
 def atatch_natgw(natgw, Subnet, is_production):
     if(is_production == False):
-        return "dummy_attach_route_table"
+        print("dummy_attach_route_table")
+        return
 
     filters = [{'Name': 'association.subnet-id', 'Values': [Subnet]}]
     response = client.describe_route_tables(Filters=filters)
@@ -48,7 +49,8 @@ def stop_natgw(Subnet, is_production):
 
 def detach_natgw(Subnet, is_production):
     if(is_production == False):
-        return "dummy_detach_route_table"
+        print("dummy_detach_route_table")
+        return
 
     filters = [{'Name': 'association.subnet-id', 'Values': [Subnet]}]
     response = client.describe_route_tables(Filters=filters)
