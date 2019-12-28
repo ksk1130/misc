@@ -9,11 +9,12 @@ import boto3
 client = boto3.client('ec2')
 
 
-def start_natgw(Subnet, is_production):
+def start_natgw(Subnet, eip_id, is_production):
     if(is_production == False):
         return "dummy_start_natgw"
 
     response = client.create_nat_gateway(
+        AllocationId=eip_id,
         SubnetId=Subnet
     )
     natid = response['NatGateway']['NatGatewayId']
@@ -68,6 +69,7 @@ def detach_natgw(Subnet, is_production):
 def lambda_handler(event, context):
     natgw_state = event['natgw_state']
     subnet_id = event['subnet_id']
+    eip_id = event['eip_id']
 
     # is_productionがTrueなら実際にリクエストを飛ばす
     #　未定義ならリクエストを飛ばさない
@@ -78,7 +80,7 @@ def lambda_handler(event, context):
             is_production = True
 
     if (natgw_state.lower() == 'on'):
-        natgw = start_natgw(subnet_id, is_production)
+        natgw = start_natgw(subnet_id, eip_id, is_production)
         atatch_natgw(natgw, subnet_id, is_production)
     elif (natgw_state.lower() == 'off'):
         detach_natgw(subnet_id, is_production)
