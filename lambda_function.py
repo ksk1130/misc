@@ -18,6 +18,7 @@ def start_natgw(Subnet, is_production):
     )
     natid = response['NatGateway']['NatGatewayId']
     client.get_waiter('nat_gateway_available').wait(NatGatewayIds=[natid])
+    print('start natgw')
     return(natid)
 
 
@@ -34,6 +35,7 @@ def atatch_natgw(natgw, Subnet, is_production):
         NatGatewayId=natgw,
         RouteTableId=rtb
     )
+    print('attached routetb')
 
 
 def stop_natgw(Subnet, is_production):
@@ -45,6 +47,7 @@ def stop_natgw(Subnet, is_production):
     response = client.describe_nat_gateways(Filters=filters)
     natgw = response['NatGateways'][0]['NatGatewayId']
     client.delete_nat_gateway(NatGatewayId=natgw)
+    print('stop natgw')
 
 
 def detach_natgw(Subnet, is_production):
@@ -59,6 +62,7 @@ def detach_natgw(Subnet, is_production):
         DestinationCidrBlock='0.0.0.0/0',
         RouteTableId=rtb
     )
+    print('detach routetb')
 
 
 def lambda_handler(event, context):
