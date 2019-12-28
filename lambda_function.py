@@ -1,30 +1,69 @@
 # -*- coding:utf-8 -*-
 
-import ConfigParser
-import csv
-import json
 import os
 import sys
 import traceback
 
-import requests
-import post_slack
+import boto3
 
-OS_ENV_KEY_DEVELOPER = 'access_keys_Developer'
-OS_ENV_KEY_AUTHORIZATION = 'access_keys_Authorization'
+subnet = os.environ['SUBNET_ID']
 
-REQUEST_HEADER = {}
+client = boto3.client('ec2')
+
+
+def start_natgw(Subnet, is_production):
+    if(is_production == False):
+        return "dummy_start_natgw"
+
+    response = client.create_nat_gateway(
+        SubnetId=Subnet
+    )
+    natid = response['NatGateway']['NatGatewayId']
+    client.get_waiter('nat_gateway_available').wait(NatGatewayIds=[natid])
+    return(natid)
+
+
+def atatch_natgw(natgw, Subnet, is_production):
+    if(is_production == False):
+        return "dummy_attach_route_table"
+
+    filters = [{'Name': 'association.subnet-id', 'Values': [Subnet]}]
+    response = client.describe_route_tables(Filters=filters)
+    rtb = response['RouteTables'][0]['Associations'][0]['RouteTableId']
+    response = client.create_route(
+        DestinationCidrBlock='0.0.0.0/0',
+        NatGatewayId=natgw,
+        RouteTableId=rtb
+    )
+
+
+def stop_natgw(Subnet, is_production):
+    if(is_production == False):
+        return "dummy_stop_nat_gw"
+
+    filters = [{'Name': 'subnet-id', 'Values': [Subnet]},
+               {'Name': 'state', 'Values': ['available']}]
+    response = client.describe_nat_gateways(Filters=filters)
+    natgw = response['NatGateways'][0]['NatGatewayId']
+    client.delete_nat_gateway(NatGatewayId=natgw)
+
+
+def detach_natgw(Subnet, is_production):
+    if(is_production == False):
+        return "dummy_detach_route_table"
+
+    filters = [{'Name': 'association.subnet-id', 'Values': [Subnet]}]
+    response = client.describe_route_tables(Filters=filters)
+    rtb = response['RouteTables'][0]['Associations'][0]['RouteTableId']
+    response = client.delete_route(
+        DestinationCidrBlock='0.0.0.0/0',
+        RouteTableId=rtb
+    )
+
 
 def lambda_handler(event, context):
     natgw_state = event['natgw_state']
-
-    if (natgw_state.lower() == 'on'):
-        natgw_state = True
-    elif (natgw_state.lower() == 'off'):
-        natgw_state = False
-    else:
-        print 'ON or OFFを指定してください'
-        sys.exit(0)
+    subnet_id = event['SUBNET_ID']
 
     # is_productionがTrueなら実際にリクエストを飛ばす
     #　未定義ならリクエストを飛ばさない
@@ -34,3 +73,12 @@ def lambda_handler(event, context):
         if(is_production == 1):
             is_production = True
 
+    if (natgw_state.lower() == 'on'):
+        natgw = start_natgw(subnet_id, is_production)
+        atatch_natgw(natgw, subnet_id, is_production)
+    elif (natgw_state.lower() == 'off'):
+        detach_natgw(subnet_id, is_production)
+        stop_natgw(subnet_id, is_production)
+    else:
+        print 'ON or OFFを指定してください'
+        sys.exit(0)
