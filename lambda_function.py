@@ -6,8 +6,6 @@ import traceback
 
 import boto3
 
-subnet = os.environ['SUBNET_ID']
-
 client = boto3.client('ec2')
 
 
