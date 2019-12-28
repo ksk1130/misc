@@ -78,5 +78,5 @@ def lambda_handler(event, context):
         detach_natgw(subnet_id, is_production)
         stop_natgw(subnet_id, is_production)
     else:
-        print 'ON or OFFを指定してください'
+        print('ON or OFFを指定してください')
         sys.exit(0)
