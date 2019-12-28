@@ -61,7 +61,7 @@ def detach_natgw(Subnet, is_production):
 
 def lambda_handler(event, context):
     natgw_state = event['natgw_state']
-    subnet_id = event['SUBNET_ID']
+    subnet_id = event['subnet_id']
 
     # is_productionがTrueなら実際にリクエストを飛ばす
     #　未定義ならリクエストを飛ばさない
