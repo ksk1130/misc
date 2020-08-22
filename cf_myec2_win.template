@@ -1,0 +1,35 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "My standard EC2 Windows template",
+  "Parameters": {
+    "KeyName": {
+      "Type": "String"
+    },
+    "SubnetId": {
+      "Type": "String"
+    },
+    "SGIds": {
+      "Type": "String"
+    }
+  },
+  "Resources": {
+    "MyEC2instance": {
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+        "KeyName": {
+          "Ref": "KeyName"
+        },
+        "ImageId": "ami-06f39b98503ed7f4e",
+        "InstanceType": "t2.micro",
+        "SubnetId": {
+          "Ref": "SubnetId"
+        },
+        "SecurityGroupIds": [
+          {
+            "Ref": "SGIds"
+          }
+        ]
+      }
+    }
+  }
+}
