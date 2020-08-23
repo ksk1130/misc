@@ -13,6 +13,41 @@
     }
   },
   "Resources": {
+    "S3FullAccessRole":{
+      "Type": "AWS::IAM::Role",
+      "Properties":{
+        "AssumeRolePolicyDocument":{
+          "Version":"2012-10-17",
+          "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {
+                    "Service": [
+                        "ec2.amazonaws.com"
+                    ]
+                },
+                "Action": [
+                    "sts:AssumeRole"
+                ]
+            }
+        ]
+        },
+        "Path":"/",
+        "ManagedPolicyArns":[
+          "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+        ]
+      }
+    },
+    "MyInstanceProfile":{
+      "Type":"AWS::IAM::InstanceProfile",
+      "Properties":{
+        "Path":"/",
+        "Roles": [
+          {
+              "Ref": "S3FullAccessRole"
+          }]
+      }
+    },
     "MyEC2instance": {
       "Type": "AWS::EC2::Instance",
       "Properties": {
@@ -21,6 +56,9 @@
         },
         "ImageId": "ami-06f39b98503ed7f4e",
         "InstanceType": "t2.micro",
+        "IamInstanceProfile":{
+          "Ref":"MyInstanceProfile"
+        },
         "SubnetId": {
           "Ref": "SubnetId"
         },
