@@ -92,11 +92,29 @@
                     "Remove-ItemProperty -Path $admin -Name \"IsInstalled\" -Force","\n",
                     "Remove-ItemProperty -Path $user -Name \"IsInstalled\" -Force","\n"]]
               }
+            },
+            "c:\\cfn\\scripts\\Setup-AWSCLI.ps1":{
+              "content":{
+                "Fn::Join": ["", [
+                  "$msiSource = 'https://awscli.amazonaws.com/AWSCLIV2.msi'","\n",
+                  "$msiOutPath = Join-Path $env:TEMP 'AWSCLIV2.msi'","\n",
+                  "Invoke-WebRequest -Uri $msiSource -OutFile $msiOutPath","\n",
+                  "$params = @{","\n",
+                  "  FilePath     = 'msiexec.exe';","\n",
+                  "  ArgumentList = @('/i', $msiOutPath, '/passive');","\n",
+                  "  Wait         = $true;","\n",
+                  "  PassThru     = $true;","\n",
+                  "}","\n",
+                  "Start-Process @params","\n"]]
             }
+          }            
           },
           "commands":{
             "1":{
               "command":"powershell.exe -File c:\\cfn\\scripts\\Setup-config.ps1"
+            },
+            "2":{
+              "command":"powershell.exe -File c:\\cfn\\scripts\\Setup-AWSCLI.ps1"
             }
           }
         }
