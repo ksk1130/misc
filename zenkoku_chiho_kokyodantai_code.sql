@@ -5,7 +5,7 @@ create table zenkoku_chiho_kokyodantai_code (
     ,todofuken_kana  varchar(30)
     ,shichoson_kana  varchar(30)
 ) 
-partition by list (shichoson_kanji)
+partition by list (todofuken_kanji)
 ;
 
 create table zenkoku_chiho_kokyodantai_code_1  partition of zenkoku_chiho_kokyodantai_code for values in ('北海道');
