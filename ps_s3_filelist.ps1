@@ -20,11 +20,6 @@ function script:Main($filepath) {
         exit 1
     }
 
-    # パスの末尾が"/"でなければ"/"を追加する(末尾"/"がないとファイル扱いになるため)
-    if ( $s3path.Substring($s3path.Length - 1) -ne "/") {
-        $s3path = $s3path + "/"
-    }
-
     aws s3 ls $s3path --recursive --human-readable --summarize | `
     %{ 
          #$filename = $_.substring($_.lastindexof(" ") + 1, $_.Length - $_.lastindexof(" ") -1)
