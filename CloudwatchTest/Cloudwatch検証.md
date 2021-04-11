@@ -86,3 +86,37 @@ if __name__ == '__main__':
     main("Message from boto3")
 ```
 
+
+
+```python
+# boto2
+# -*- coding:utf8 -*-
+
+import boto.logs
+import time
+
+def put_message(logs,message):
+    res = logs.describe_log_streams(
+        log_group_name='LogGroupTest',
+        log_stream_name_prefix='LogStreamTest'
+    )
+    seq_token = res['logStreams'][0]['uploadSequenceToken']
+
+    res = logs.put_log_events(
+        log_group_name='LogGroupTest',
+        log_stream_name='LogStreamTest',
+        log_events=[
+            {
+                'timestamp': int(time.time()) * 1000,
+                'message': '%s' % (message)
+            },
+        ],
+        sequence_token=seq_token
+    )
+
+if __name__ == '__main__':
+    logs = boto.logs.connect_to_region('ap-northeast-1')
+
+    put_message(logs,'Message from boto2')
+```
+
