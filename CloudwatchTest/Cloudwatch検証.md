@@ -120,3 +120,52 @@ if __name__ == '__main__':
     put_message(logs,'Message from boto2')
 ```
 
+## EMRからのメッセージ投稿
+
+```python
+# -*- coding:utf8 -*-
+
+import boto.logs
+import time
+
+from pyspark.sql import SparkSession
+
+def put_log(logs_client, message):
+    res = logs_client.describe_log_streams(
+        log_group_name='LogGroupTest',
+        log_stream_name_prefix='LogStreamTest'
+    )
+    seq_token = res['logStreams'][0]['uploadSequenceToken']
+
+    res = logs_client.put_log_events(
+        log_group_name='LogGroupTest',
+        log_stream_name='LogStreamTest',
+        log_events=[
+            {
+                'timestamp': int(time.time()) * 1000,
+                'message': '%s' % (message)
+            },
+        ],
+        sequence_token=seq_token
+    )
+
+def main(logs_client):
+
+    spark = SparkSession \
+    .builder \
+    .enableHiveSupport() \
+    .getOrCreate()
+
+    df = spark.sql("SELECT * FROM postal_db.p_postal_csv")
+    message = "count: {}".format(df.count())
+
+    df = spark.sql("select prefecture_kanji,count(*) from postal_db.p_postal_csv group by prefecture_kanji order by prefecture_kanji")
+    message = "{}".format(df.rdd.take(10))
+    put_log(logs_client,message)
+
+
+if __name__ == '__main__':
+    logs_client = boto.logs.connect_to_region('ap-northeast-1')
+    main(logs_client)
+```
+
