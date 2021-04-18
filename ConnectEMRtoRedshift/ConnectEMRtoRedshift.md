@@ -20,7 +20,7 @@ invoke-webrequest -uri https://repo1.maven.org/maven2/com/databricks/spark-avro_
 invoke-webrequest -uri https://s3.amazonaws.com/redshift-downloads/drivers/jdbc/1.2.41.1065/RedshiftJDBC4-no-awssdk-1.2.41.1065.jar -outfile RedshiftJDBC4-no-awssdk-1.2.41.1065.jar
 ```
 
-### S3への配置
+### S3へのライブラリ配置
 
 ```
 s3://<bucket_name>/emr2redshift/libs/
@@ -58,7 +58,7 @@ sudo yum install postgresql
 psql -h redshift-cluster-1.*******.ap-northeast-1.redshift.amazonaws.com -p 5439 -U awsuser -d dev
 ```
 
-### SparkでRedshiftへ接続
+### SparkでRedshiftへ接続(Databrickライブラリ使用) pyspark->成功
 
 ```python
 # pyspark --jars s3://target_bucket/emr2redshift/libs/RedshiftJDBC4-no-awssdk-1.2.41.1065.jar,s3://target_bucket/emr2redshift/libs/minimal-json-0.9.5.jar,s3://target_bucket/emr2redshift/libs/spark-avro_2.11-3.0.0.jar,s3://target_bucket/emr2redshift/libs/spark-redshift_2.10-2.0.1.jar
@@ -80,7 +80,7 @@ df_users = sql_context.read \
     
 df_users.show()
 ```
-### Spark-Submitでうまくいったバージョン
+### SparkでRedshiftへ接続(Databrickライブラリ使用) spark-submit->成功
 ```python
 # spark-submit --jars s3://target_bucket/emr2redshift/libs/RedshiftJDBC4-no-awssdk-1.2.41.1065.jar,s3://target_bucket/emr2redshift/libs/minimal-json-0.9.5.jar,s3://target_bucket/emr2redshift/libs/spark-avro_2.11-3.0.0.jar,s3://target_bucket/emr2redshift/libs/spark-redshift_2.10-2.0.1.jar conn_databrick_rs.py
 # ↑でうまくいった
@@ -109,7 +109,20 @@ df_users = sql_context.read \
 
 df_users.show()
 ```
+### SparkでRedshiftへ接続(通常のAPI用) pyspark->失敗
+```python
+# pysparkで以下のスクリプトは「pyspark.sql.utils.AnalysisException: 'Unable to infer schema for Parquet. It must be specified manually.;'」となりうまく実行できなかった
+# https://stackoverflow.com/questions/34948296/using-pyspark-to-connect-to-postgresql
 
+sqlContext = SQLContext(sc)
+
+df = sqlContext.read\
+.option("url","jdbc:redshift://redshift-cluster-1.***.ap-northeast-1.redshift.amazonaws.com:5439/dev;UID=***;PWD=***")\
+.option("dbtable","public.target_tbl")\
+.load()
+```
+
+### SparkでRedshiftへ接続(通常のAPI用) spark-submit->失敗
 ```python
 # 下記のスクリプトは spark-submitではうまく動かなかった(No suitable Driverだそう)
 # https://stackoverflow.com/questions/34948296/using-pyspark-to-connect-to-postgresql
@@ -129,16 +142,3 @@ df = spark.read \
 
 df.printSchema()
 ```
-
-```python
-# pysparkで以下のスクリプトは「pyspark.sql.utils.AnalysisException: 'Unable to infer schema for Parquet. It must be specified manually.;'」となりうまく実行できなかった
-# https://stackoverflow.com/questions/34948296/using-pyspark-to-connect-to-postgresql
-
-sqlContext = SQLContext(sc)
-
-df = sqlContext.read\
-.option("url","jdbc:redshift://redshift-cluster-1.***.ap-northeast-1.redshift.amazonaws.com:5439/dev;UID=***;PWD=***")\
-.option("dbtable","public.target_tbl")\
-.load()
-```
-
