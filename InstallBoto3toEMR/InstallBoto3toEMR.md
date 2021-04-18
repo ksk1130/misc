@@ -8,6 +8,7 @@
 4. 依存ライブラリを含めたすべてを固める
 5. EMRに転送
 6. 解凍してインストール
+7. (補足)yumでインストール
 ## 1. オンライン環境でboto3をダウンロード
 
 ```bash
@@ -68,3 +69,9 @@ cd src/
 [hadoop@ip-192-168-2-114 src]$ sudo pip3 install ./boto3-1.17.50.tar.gz
 ```
 
+## 7. (補足)yumでインストール
+
+```bash
+# Amazon Linuxのyumリポジトリには以下のパッケージがある
+python2-boto3.noarch : The AWS SDK for Python
+```
