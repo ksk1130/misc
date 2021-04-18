@@ -96,6 +96,10 @@ sc._jsc.hadoopConfiguration().set("fs.s3a.credentialsType", "AssumeRole")
 sc._jsc.hadoopConfiguration().set("fs.s3a.stsAssumeRole.arn", "arn:aws:iam::***:role/EC2-S3FullAccess-Role")
 sql_context = SQLContext(sc)
 
+
+# tempdirはRedshiftからの抽出結果が入っていた(テキスト形式)
+# Redshiftからアンロード→Sparkでロードを透過的にやっている模様
+# tempdirのクリアが必要になりそう
 df_users = sql_context.read \
     .format("com.databricks.spark.redshift") \
     .option("url", jdbcUrl) \
