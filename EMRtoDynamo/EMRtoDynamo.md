@@ -60,22 +60,156 @@ aws dynamodb --region ap-northeast-1 scan --table-name test_tbl
 
 
 
-## boto3からDynamo
+## boto2からDynamo
 
 ### テーブル一覧
 
+```python
+# -*- coding:utf8 -*-
+
+import boto
+from boto.dynamodb2.layer1 import DynamoDBConnection
+
+def tables():
+    conn = boto.dynamodb2.connect_to_region(
+    'ap-northeast-1'
+    )
+    tables = conn.list_tables()
+
+    return tables
+
+if __name__ == '__main__':
+    res = tables()
+    print(res)
+```
+
+
+
 ### テーブル作成
+
+```
+(あとで)
+```
+
+
 
 ### データ投入
 
+```python
+# -*- coding:utf8 -*-
+
+import boto
+from boto.dynamodb2.table import Table
+from boto.dynamodb2.layer1 import DynamoDBConnection
+
+def put_item(item_id, title,str_date):
+    conn = boto.dynamodb2.connect_to_region(
+    'ap-northeast-1'
+    )
+
+    table = Table('test_tbl', connection = conn)
+    response = table.put_item(
+       data={
+            'item_id': item_id,
+            'title': title,
+            'str_date': str_date,
+        }
+    )
+    return response
+
+if __name__ == '__main__':
+    movie_resp = put_item("item_001","The Big New Movie",
+            "2021-04-19 23:20:00")
+    print("Put item succeeded:")
+```
+
+
+
 ### データ検索
+
+```
+後ほど
+```
+
+
 
 ### データ削除
 
+```
+後ほど
+```
+
+
+
 ### テーブル削除
+
+```
+後ほど
+```
+
+
 
 ## 4. EMRからDynamo
 
 ### boto3のインストール（ブートストラップアクション）
 
-### データ投入（boto3から）
+```
+(いったん後で)
+```
+
+
+
+### データ投入（boto2から）
+
+```python
+# -*- coding:utf8 -*-
+
+import boto
+from boto.dynamodb2.table import Table
+from boto.dynamodb2.layer1 import DynamoDBConnection
+from datetime import datetime as dt
+
+from pyspark.sql import SparkSession
+
+def put_item(item_id, count,str_date):
+    conn = boto.dynamodb2.connect_to_region(
+    'ap-northeast-1'
+    )
+
+    table = Table('test_tbl', connection = conn)
+    response = table.put_item(
+       data={
+            'item_id': item_id,
+            'count': count,
+            'str_date': str_date,
+        }
+    )
+    return response
+
+def main():
+    items_csv = "s3://target_bucket/postal_csv/ken_all.csv"
+
+    spark = SparkSession\
+          .builder\
+          .getOrCreate()
+
+    df = spark.read\
+      .format("csv")\
+      .load(items_csv)
+
+    # CSVの行数を取得
+    count = df.count()
+
+    # 日付を文字列に変換
+    tdatetime = dt.now()
+    tstr = tdatetime.strftime('%Y/%m/%d %H:%M:%S')
+
+    res = put_item("item_002",count,
+            tstr)
+    print("Put item succeeded:")
+
+
+if __name__ == '__main__':
+    main()
+```
+
