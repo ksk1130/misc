@@ -20,15 +20,45 @@
 
 ### テーブル一覧
 
+```bash
+aws dynamodb --region ap-northeast-1 list-tables
+```
+
 ### テーブル作成
+
+```
+(後ほど)
+```
+
+
 
 ### データ投入
 
+```bash
+aws dynamodb put-item --table-name test_tbl --item '{ "item_id": { "S": "abc123" }, "date_mod": { "S": "1950-6-22" }, "name": { "S": "足利" } }'
+```
+
 ### データ検索
+
+```bash
+aws dynamodb --region ap-northeast-1 scan --table-name test_tbl
+```
 
 ### データ削除
 
+```
+(後ほど)
+```
+
+
+
 ### テーブル削除
+
+```
+(後ほど)
+```
+
+
 
 ## boto3からDynamo
 
