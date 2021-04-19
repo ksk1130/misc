@@ -11,7 +11,7 @@
 ### 1. 設定値の検討
 #### 対象のインスタンスタイプ
 ```
-m4.large core:4 memory:16gb × 2
+m4.large core:2 memory:8gb × 2
 ```
 #### 設定対象のパラメータ
 | #    | パラメータ名              | 概要                                                         |
@@ -26,13 +26,13 @@ m4.large core:4 memory:16gb × 2
 #### 設定値の計算結果
 | #  | パラメータ名              | 概要                                                         |
 | -- | ------------------------- | ------------------------------------------------------------ |
-| 1  | spark.executor.memory     | 13                                                           |
+| 1  | spark.executor.memory     | 13G                                                          |
 | 2  | spark.executor.cores      | 2                                                            |
-| 3  | spark.driver.memory       | 13                                                           |
+| 3  | spark.driver.memory       | 13G                                                          |
 | 4  | spark.driver.cores        | 2                                                            |
 | 5  | spark.executor.instances  | 3                                                            |
 | 6  | spark.default.parallelism | 12                                                           |
-| 7  | spark.yarn.executor.memoryOverhead | 2 |
+| 7  | spark.executor.memoryOverhead | 2G |
 
 ### 2. EMR起動時に設定を投入
 
@@ -41,13 +41,13 @@ m4.large core:4 memory:16gb × 2
   {
     "Classification": "spark-defaults",
     "Properties": {
-      "spark.executor.memory":"13",
+      "spark.executor.memory":"13G",
       "spark.executor.cores":"2",
-      "spark.driver.memory":"13",
+      "spark.driver.memory":"13G",
       "spark.driver.cores":"2",
       "spark.executor.instances":"3",
       "spark.default.parallelism":"12",
-      "spark.yarn.executor.memoryOverhead":"2"
+      "spark.executor.memoryOverhead":"2G"
     }
   }
 ]
@@ -56,3 +56,14 @@ m4.large core:4 memory:16gb × 2
 
 
 ### 3. 実機で設定結果を確認
+
+```bash
+# spark-defaults.confの場所
+/etc/spark/conf.dist/spark-defaults.conf
+```
+
+## 参考URL
+
+[Amazon EMR で Apache Spark アプリケーションのメモリをうまく管理するためのベストプラクティス](https://aws.amazon.com/jp/blogs/news/best-practices-for-successfully-managing-memory-for-apache-spark-applications-on-amazon-emr/)
+
+[Amazon EMR の Spark で「メモリ制限を超えたために YARN によってコンテナが強制終了されました」というエラーを解決するにはどうすればよいですか?](https://aws.amazon.com/jp/premiumsupport/knowledge-center/emr-spark-yarn-memory-limit/)
