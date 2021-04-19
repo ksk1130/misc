@@ -24,8 +24,8 @@ testdb0407
 ###  3. S3のフォルダ作成
 
 ```sh
-euks.testbucket/testdb0407/csv
-euks.testbucket/testdb0407/pq
+target_bucket/testdb0407/csv
+target_bucket/testdb0407/pq
 ```
 
 
@@ -44,7 +44,7 @@ ROW FORMAT SerDe 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe'
 WITH SERDEPROPERTIES (
 'field.delim' = ','
 )
-LOCATION 's3://euks.testbucket/testdb0407/csv/'
+LOCATION 's3://target_bucket/testdb0407/csv/'
 TBLPROPERTIES (
 'serialization.encoding'='SJIS'
 );
@@ -68,7 +68,7 @@ ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 WITH SERDEPROPERTIES (
   'serialization.format' = '1'
 )
-LOCATION 's3://euks.testbucket/testdb0407/pq/';
+LOCATION 's3://target_bucket/testdb0407/pq/';
 ```
 
 
@@ -265,7 +265,7 @@ ROW FORMAT SERDE 'org.apache.hadoop.hive.ql.io.parquet.serde.ParquetHiveSerDe'
 WITH SERDEPROPERTIES (
   'serialization.format' = '1'
 )
-LOCATION 's3://euks.testbucket/testdb0407/pq/';
+LOCATION 's3://target_bucket/testdb0407/pq/';
 
 -- パーティションロードが必要な旨通知されたので、下記コマンドを実行
 MSCK REPAIR TABLE items_pq;
@@ -273,7 +273,7 @@ MSCK REPAIR TABLE items_pq;
 -- 問い合わせ
 select * from items_pq;
 →Zero records returned.が返ってきた。元のテーブル定義でも変わらず...これ禁忌なのか...？
-→ ...と思ったが、s3://euks.testbucket/testdb0407/に「pq」というファイルがあったせいでした(クローラが誤認したっぽい)
+→ ...と思ったが、s3://target_bucket/testdb0407/に「pq」というファイルがあったせいでした(クローラが誤認したっぽい)
 　削除したらうまく検出されました
 
 -- このように、item_valueと、item_colorの間に、「item_size」が入っています
@@ -302,7 +302,7 @@ ROW FORMAT SerDe 'org.apache.hadoop.hive.serde2.lazy.LazySimpleSerDe'
 WITH SERDEPROPERTIES (
 'field.delim' = ','
 )
-LOCATION 's3://euks.testbucket/testdb0407/csv/'
+LOCATION 's3://target_bucket/testdb0407/csv/'
 TBLPROPERTIES (
 'serialization.encoding'='SJIS'
 );
