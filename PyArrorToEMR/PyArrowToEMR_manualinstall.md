@@ -1,3 +1,11 @@
+# EMRへのPyArrowの導入
+
+## 方針
+
+極力外部からのrpmとAmazonLinuxのリポジトリのモジュールでPyArrowをセットアップする
+
+## 必要なファイルの入手
+
 ```bash
 wget https://files.pythonhosted.org/packages/d3/38/adc49a5aca4f644e6322237089fdcf194084f5fe41445e6e632f28b32bf7/Cython-0.29.22.tar.gz
 wget https://github.com/numpy/numpy/releases/download/v1.20.2/numpy-1.20.2.tar.gz
@@ -26,3 +34,6 @@ sudo rpm -ivh apache-arrow-release-latest.rpm
 sudo pip3 install ./pyarrow-3.0.0.tar.gz
 ```
 
+## 結論
+
+どうやらAmazonLinuxのリポジトリにあるモジュールではPyArrowをセットアップできなさそうなため、NatGW経由でPyArrowを導入したAMIを使ってEMRを起動することとする。
