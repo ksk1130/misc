@@ -548,3 +548,152 @@ spark-sql> select * from fruit_order_pq;
 2020-02-02      みかん  2       NULL
 ```
 
+## 5. ffspecのインストール
+
+### 5.1 AMIからインスタンスを作成
+
+- t2.micro(最安でよい。ただし、intel系のインスタンス(m6g等の"g"が付かないタイプ)を選択する)
+- 対象のVPC
+- プライベートサブネット(NATGWを使うため)
+- ストレージ8GB(EMRのサイズとは関係ないため)
+- 適切なSGを選択(EMRのSGとは関係なし。SSHアクセスができること)
+
+### 5.2 NATGW経由でインターネットに出られることを確認
+
+```
+wget www.google.com
+```
+
+### 5.3 PyArrowが入っていることを確認
+
+```
+[ec2-user@ip-192-168-2-73 ~]$ python3 -m pip freeze
+boto3==1.17.57
+botocore==1.20.57
+jmespath==0.10.0
+numpy==1.20.2
+pandas==1.2.4
+pyarrow==3.0.0
+python-dateutil==2.8.1
+pytz==2021.1
+s3transfer==0.4.2
+six==1.15.0
+urllib3==1.26.4
+```
+
+### 5.4 ffspecをインストール
+
+```
+# ポイントとしては、su権限でやること(グローバルにインストールされる)
+[ec2-user@ip-192-168-2-154 wk_0425]$  sudo python3 -m pip install fsspec
+WARNING: Value for scheme.platlib does not match. Please report this to <https://github.com/pypa/pip/issues/9617>
+distutils: /usr/local/lib64/python3.7/site-packages
+sysconfig: /usr/lib64/python3.7/site-packages
+
+# s3アクセスには、併せてs3fsも必要そうだったため、併せてインストール
+[ec2-user@ip-192-168-2-154 wk_0425]$  sudo python3 -m pip install s3fs
+WARNING: Value for scheme.platlib does not match. Please report this to <https://github.com/pypa/pip/issues/9617>
+distutils: /usr/local/lib64/python3.7/site-packages
+sysconfig: /usr/lib64/python3.7/site-packages
+```
+
+### 5.5 インストール確認
+
+```
+[ec2-user@ip-192-168-2-154 wk_0425]$ pip3 freeze
+aiobotocore==1.3.0
+aiohttp==3.7.4.post0
+aioitertools==0.7.1
+async-timeout==3.0.1
+attrs==21.2.0
+boto3==1.17.57
+botocore==1.20.49
+chardet==4.0.0
+fsspec==2021.5.0
+idna==3.1
+jmespath==0.10.0
+multidict==5.1.0
+numpy==1.20.2
+pandas==1.2.4
+pyarrow==3.0.0
+python-dateutil==2.8.1
+pytz==2021.1
+s3fs==2021.5.0
+s3transfer==0.4.2
+six==1.15.0
+typing-extensions==3.10.0.0
+urllib3==1.26.4
+wrapt==1.12.1
+yarl==1.6.3
+```
+
+### 5.6 AMI作成
+
+```
+ami-0426b70696cbd037f
+```
+
+### 5.7 AMIからEMRクラスタを作成
+
+```
+再起動時にすべてのインストール済みパッケージを更新する (推奨)　にチェック
+```
+
+### 5.8 EMRでのモジュール確認
+
+```
+[hadoop@ip-192-168-2-190 ~]$ pip3 freeze
+aiobotocore==1.3.0
+aiohttp==3.7.4.post0
+aioitertools==0.7.1
+async-timeout==3.0.1
+attrs==21.2.0
+beautifulsoup4==4.9.3
+boto==2.49.0
+boto3==1.17.57
+botocore==1.20.49
+chardet==4.0.0
+click==7.1.2
+fsspec==2021.5.0
+idna==3.1
+jmespath==0.10.0
+joblib==0.17.0
+lxml==4.6.1
+multidict==5.1.0
+mysqlclient==1.4.2
+nltk==3.5
+nose==1.3.4
+numpy==1.20.2
+pandas==1.2.4
+py-dateutil==2.2
+pyarrow==3.0.0
+python-dateutil==2.8.1
+python37-sagemaker-pyspark==1.4.1
+pytz==2021.1
+PyYAML==5.3.1
+regex==2020.10.28
+s3fs==2021.5.0
+s3transfer==0.4.2
+six==1.15.0
+tqdm==4.51.0
+typing-extensions==3.10.0.0
+urllib3==1.26.4
+windmill==1.6
+wrapt==1.12.1
+yarl==1.6.3
+```
+
+### 5.9 EMRからPyArrow(S3ファイルアクセス)を実行
+
+```python
+# -*- coding:utf8 -*-
+# Parquetフォーマットへの変換
+import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
+
+df = pd.read_csv('s3://euks.testbucket/wk_0520/tdfk.csv')
+table = pa.Table.from_pandas(df)
+pq.write_table(table, './tdfk.parquet')
+```
+
