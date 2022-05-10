@@ -12,4 +12,5 @@ set AWS_SESSION_TOKEN=***6zO
 ```
 
 ## MFA強制ポリシーの参考URL
-https://blog.nijot.com/aws/aws-cli-mfa-force-setting/
+- https://blog.nijot.com/aws/aws-cli-mfa-force-setting/
+- https://aws.amazon.com/jp/premiumsupport/knowledge-center/authenticate-mfa-cli/
