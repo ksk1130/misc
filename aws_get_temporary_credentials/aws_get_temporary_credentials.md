@@ -10,3 +10,6 @@ set AWS_ACCESS_KEY_ID=****TGN
 set AWS_SECRET_ACCESS_KEY=***6Gq
 set AWS_SESSION_TOKEN=***6zO
 ```
+
+## MFA強制ポリシーの参考URL
+https://blog.nijot.com/aws/aws-cli-mfa-force-setting/
