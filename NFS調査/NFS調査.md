@@ -4,8 +4,12 @@
   - [参考URL](#参考url)
   - [想定環境](#想定環境)
   - [設定](#設定)
-    - [NFSサーバ](#nfsサーバ)
+    - [1.NFSサーバ](#1nfsサーバ)
+    - [2.NFSクライアント](#2nfsクライアント)
   - [気になる点](#気になる点)
+    - [1. exportsの設定と違うマウント元を指定した場合、どのように見えるのか](#1-exportsの設定と違うマウント元を指定した場合どのように見えるのか)
+    - [2. exportsの設定を書き換えた場合、NFSサーバのサービス再起動は必要か](#2-exportsの設定を書き換えた場合nfsサーバのサービス再起動は必要か)
+    - [3. exportsの設定を書き換える時、NFSクライアントのアンマウントは必要か](#3-exportsの設定を書き換える時nfsクライアントのアンマウントは必要か)
 
 ## 参考URL
 https://qiita.com/Higemal/items/f06a1dda931da3ac4f7a
@@ -30,7 +34,7 @@ https://qiita.com/Higemal/items/f06a1dda931da3ac4f7a
 ```
 
 ## 設定
-### NFSサーバ
+### 1.NFSサーバ
 ```sh
 # /ext/exports
 
@@ -38,8 +42,9 @@ https://qiita.com/Higemal/items/f06a1dda931da3ac4f7a
 /share 192.168.0.31/32(rw,no_root_squash,async)
 # /share/dirBはdockerhostだけ見れる
 /share/dirB 192.168.0.54/32(rw,no_root_squash,async)
+```
 
-### NFSクライアント
+### 2.NFSクライアント
 ```sh
 # /etc/fstab
 
@@ -51,7 +56,7 @@ mount -v -t nfs 192.168.0.59:/share/dirB /share
 ```
 
 ## 気になる点
-1. exportsの設定と違うマウント元を指定した場合、どのように見えるのか
+### 1. exportsの設定と違うマウント元を指定した場合、どのように見えるのか
 ```sh
 # 192.168.0.54に以下のように指定した場合、エラーとなるのか(192.168.0.59では、/share/dirBのみ定義している)
 # →エラーとはならないが、アクセス可の「dirB」しか見えない
@@ -76,7 +81,7 @@ mount.nfs: trying text-based options 'vers=4.1,addr=192.168.0.59,clientaddr=192.
 dirB.txt
 ```
 
-2. exportsの設定を書き換えた場合、NFSサーバのサービス再起動は必要か
+### 2. exportsの設定を書き換えた場合、NFSサーバのサービス再起動は必要か
 ```sh
 # 変更内容
 # /share/dirBはdockerhostだけ見れる
@@ -142,3 +147,67 @@ mount.nfs: trying text-based options 'vers=4.1,addr=192.168.0.59,clientaddr=192.
 /share/:
 dirA.txt
 ```
+
+### 3. exportsの設定を書き換える時、NFSクライアントのアンマウントは必要か
+1. 初期設定
+```sh
+# NFSサーバ
+[root@nfshost suke]# cat /etc/exports
+# /shareはraspiだけ見れる
+/share 192.168.0.31/32(rw,no_root_squash,async)
+# /share/dirAはdockerhostだけ見れる
+/share/dirA 192.168.0.54/32(rw,no_root_squash,async)
+```
+
+```sh
+# NFSクライアント
+[suke@localhost ~]$ ls -aR /share/
+/share/:
+./
+../
+dirA.txt
+```
+
+2. 192.168.0.54の参照可能ディレクトリを/share/dirBに変更
+```sh
+# NFSサーバ
+# /shareはraspiだけ見れる
+/share 192.168.0.31/32(rw,no_root_squash,async)
+# /share/dirBはdockerhostだけ見れる
+/share/dirB 192.168.0.54/32(rw,no_root_squash,async)
+```
+
+3. NFSサービスを再起動
+```sh
+# NFSサーバ
+[root@nfshost suke]# systemctl restart nfs-server
+[root@nfshost suke]# systemctl status nfs-server
+● nfs-server.service - NFS server and services
+   Loaded: loaded (/usr/lib/systemd/system/nfs-server.service; enabled; vendor preset: disabled)
+  Drop-In: /run/systemd/generator/nfs-server.service.d
+           mqorder-with-mounts.conf
+   Active: active (exited) since 水 2023-04-26 00:22:30 JST; 6s ago
+```
+
+4. NFSクライアントのマウント状態を確認
+```sh
+# NFSクライアント
+[suke@localhost ~]$ ls -aR /share
+ls: /share にアクセスできません: 古いファイルハンドルです
+```
+
+5. NFSクライアントのマウントを解除 → 再マウント
+```sh
+# NFSクライアント
+[root@localhost suke]# umount /share
+[root@localhost suke]# mount -v -t nfs 192.168.0.59:/share/dirB /share
+mount.nfs: timeout set for Wed Apr 26 00:27:22 2023
+mount.nfs: trying text-based options 'vers=4.1,addr=192.168.0.59,clientaddr=192.168.0.54'
+[suke@localhost ~]$ ls -aR /share/
+/share/:
+./
+../
+dirB.txt
+```
+
+
