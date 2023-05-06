@@ -1,0 +1,8 @@
+\LogicalDisk(*)\*
+\Memory\*
+\Network Interface(*)\*
+\Process(*)\*
+\Processor(*)\*
+\PhysicalDisk(*)\*
+\Server\*
+\System\*
