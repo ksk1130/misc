@@ -1,6 +1,6 @@
 # 現在のホストの時刻と、WSLの時刻を表示する
 Write-host 現在のホストの時刻と、WSLの時刻を表示します
-Get-Date -Format $rfc3339;  wsl date --rfc-3339=ns
+Get-Date -Format $rfc3339;  wsl date
 
 # 空行を出力
 Write-host ""
@@ -14,4 +14,4 @@ Write-host ""
 
 # 現在のホストの時刻と、WSLの時刻を表示する
 Write-host 現在のホストの時刻と、WSLの時刻を表示します
-Get-Date -Format $rfc3339;  wsl date --rfc-3339=ns
+Get-Date -Format $rfc3339;  wsl date
