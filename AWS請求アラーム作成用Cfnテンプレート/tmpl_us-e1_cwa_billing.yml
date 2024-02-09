@@ -1,8 +1,9 @@
 Parameters:
   MailAddress:
     Type: String
+    Description: "Mail Address for Notification"
 Resources:
-  CloudWatchAlarm00BillingAlarm00mCpEk:
+  BillingAlarm:
     UpdateReplacePolicy: "Retain"
     Type: "AWS::CloudWatch::Alarm"
     DeletionPolicy: "Delete"
@@ -17,14 +18,14 @@ Resources:
       Namespace: "AWS/Billing"
       OKActions: []
       AlarmActions:
-      - Ref: "SNSTopic00NotifyMe00bNLgr"
+      - Ref: "SNSTopicNotifyMe"
       MetricName: "EstimatedCharges"
       ActionsEnabled: true
       AlarmName: "BillingAlarm"
       Statistic: "Maximum"
       InsufficientDataActions: []
       Threshold: 0
-  CloudWatchAlarm00BillingAlarm1007XM0t:
+  BillingAlarm1:
     UpdateReplacePolicy: "Retain"
     Type: "AWS::CloudWatch::Alarm"
     DeletionPolicy: "Delete"
@@ -39,14 +40,14 @@ Resources:
       Namespace: "AWS/Billing"
       OKActions: []
       AlarmActions:
-      - Ref: "SNSTopic00NotifyMe00bNLgr"
+      - Ref: "SNSTopicNotifyMe"
       MetricName: "EstimatedCharges"
       ActionsEnabled: true
       AlarmName: "BillingAlarm1"
       Statistic: "Maximum"
       InsufficientDataActions: []
       Threshold: 5
-  SNSTopic00NotifyMe00bNLgr:
+  SNSTopicNotifyMe:
     UpdateReplacePolicy: "Retain"
     Type: "AWS::SNS::Topic"
     DeletionPolicy: "Delete"
