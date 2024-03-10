@@ -1,0 +1,5 @@
+\Processor(_Total)\% Processor Time
+\Memory\Available MBytes
+\PhysicalDisk(_Total)% Disk Time
+\System\Processor Queue Length
+\Network Interface(_Total)\Bytes Total/sec
