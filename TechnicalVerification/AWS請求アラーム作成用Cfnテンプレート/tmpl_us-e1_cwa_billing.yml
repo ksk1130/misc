@@ -1,0 +1,61 @@
+Parameters:
+  MailAddress:
+    Type: String
+    Description: "Mail Address for Notification"
+Resources:
+  BillingAlarm:
+    UpdateReplacePolicy: "Retain"
+    Type: "AWS::CloudWatch::Alarm"
+    DeletionPolicy: "Delete"
+    Properties:
+      ComparisonOperator: "GreaterThanThreshold"
+      TreatMissingData: "missing"
+      Dimensions:
+      - Value: "USD"
+        Name: "Currency"
+      Period: 21600
+      EvaluationPeriods: 1
+      Namespace: "AWS/Billing"
+      OKActions: []
+      AlarmActions:
+      - Ref: "SNSTopicNotifyMe"
+      MetricName: "EstimatedCharges"
+      ActionsEnabled: true
+      AlarmName: "BillingAlarm"
+      Statistic: "Maximum"
+      InsufficientDataActions: []
+      Threshold: 0
+  BillingAlarm1:
+    UpdateReplacePolicy: "Retain"
+    Type: "AWS::CloudWatch::Alarm"
+    DeletionPolicy: "Delete"
+    Properties:
+      ComparisonOperator: "GreaterThanThreshold"
+      TreatMissingData: "missing"
+      Dimensions:
+      - Value: "USD"
+        Name: "Currency"
+      Period: 21600
+      EvaluationPeriods: 1
+      Namespace: "AWS/Billing"
+      OKActions: []
+      AlarmActions:
+      - Ref: "SNSTopicNotifyMe"
+      MetricName: "EstimatedCharges"
+      ActionsEnabled: true
+      AlarmName: "BillingAlarm1"
+      Statistic: "Maximum"
+      InsufficientDataActions: []
+      Threshold: 5
+  SNSTopicNotifyMe:
+    UpdateReplacePolicy: "Retain"
+    Type: "AWS::SNS::Topic"
+    DeletionPolicy: "Delete"
+    Properties:
+      FifoTopic: false
+      Subscription:
+      - Endpoint: !Ref MailAddress
+        Protocol: "email"
+      ArchivePolicy: {}
+      TopicName: "NotifyMe"
+

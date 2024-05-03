@@ -1,0 +1,6 @@
+# スタックの作成
+aws cloudformation create-stack --stack-name stack-temp-iam-user --template-body file://temp_iam_user.yml --capabilities CAPABILITY_NAMED_IAM \
+ --profile opeusr --region ap-northeast-1
+
+# スタックの削除
+aws cloudformation delete-stack --stack-name stack-temp-iam-user --profile opeusr --region ap-northeast-1
