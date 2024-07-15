@@ -1,0 +1,4 @@
+03_scripts/build/
+03_scripts/dist/
+03_scripts/redshift_module.egg-info/
+03_scripts/redshift_module/__pycache__/

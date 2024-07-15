@@ -1,0 +1,20 @@
+# build
+cd /redshift_sample_data
+docker build -t python38-rs -f 04_Dockerfile/Dockerfile .
+
+# exec docker on base directory
+cd ../
+docker run --rm -v $PWD:/tmp -w /tmp -it python38-rs
+
+# use minio(s3 like object storage) on docker
+docker run -p 9000:9000 \
+--name minio_test \
+-e "MINIO_ACCESS_KEY=minio_access_key" \
+-e "MINIO_SECRET_KEY=minio_secret_key" \
+minio/minio server /data
+
+# alias for minio on docker
+alias aws='docker run --rm -it -v "$PWD:/tmp" -w /tmp -e AWS_ACCESS_KEY_ID=minio_access_key -e AWS_SECRET_ACCESS_KEY=minio_secret_key amazon/aws-cli'
+
+# usage for minio on docker with aws-cli
+aws --endpoint-url http://192.168.0.54:9000 s3 ls s3://targetbucket/sqls/

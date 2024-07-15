@@ -1,0 +1,15 @@
+version: '3'
+services:
+  httpd:
+    image: httpd-container:latest
+    container_name: httpd-container
+    depends_on:
+      - tomcat
+    ports:
+      - "80:80"
+  tomcat:
+    image: tomcat-container:latest
+    container_name: tomcat-container
+    expose:
+      - "8009"
+

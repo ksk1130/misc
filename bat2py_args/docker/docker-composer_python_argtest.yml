@@ -1,0 +1,12 @@
+version: '3'
+
+services:
+  python_argtest:
+    image: python_argtest:latest
+    tty: true
+    container_name: 'python_argtest'
+    environment:
+      AWS_PROFILE: ${PROFILE_NAME}
+    restart: always
+    volumes:
+     - "${AWS_DIR}:/root/.aws"

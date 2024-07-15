@@ -1,0 +1,125 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": "My standard EC2 Windows template",
+  "Parameters": {
+    "KeyName": {
+      "Type": "String"
+    },
+    "SubnetId": {
+      "Type": "String"
+    },
+    "SGIds": {
+      "Type": "String"
+    }
+  },
+  "Resources": {
+    "S3FullAccessRole":{
+      "Type": "AWS::IAM::Role",
+      "Properties":{
+        "AssumeRolePolicyDocument":{
+          "Version":"2012-10-17",
+          "Statement": [
+            {
+                "Effect": "Allow",
+                "Principal": {
+                    "Service": [
+                        "ec2.amazonaws.com"
+                    ]
+                },
+                "Action": [
+                    "sts:AssumeRole"
+                ]
+            }
+        ]
+        },
+        "Path":"/",
+        "ManagedPolicyArns":[
+          "arn:aws:iam::aws:policy/AmazonS3FullAccess"
+        ]
+      }
+    },
+    "MyInstanceProfile":{
+      "Type":"AWS::IAM::InstanceProfile",
+      "Properties":{
+        "Path":"/",
+        "Roles": [
+          {
+              "Ref": "S3FullAccessRole"
+          }]
+      }
+    },
+    "MyEC2instance": {
+      "Type": "AWS::EC2::Instance",
+      "Properties": {
+        "KeyName": {
+          "Ref": "KeyName"
+        },
+        "ImageId": "ami-06f39b98503ed7f4e",
+        "InstanceType": "t2.micro",
+        "IamInstanceProfile":{
+          "Ref":"MyInstanceProfile"
+        },
+        "SubnetId": {
+          "Ref": "SubnetId"
+        },
+        "SecurityGroupIds": [
+          {
+            "Ref": "SGIds"
+          }
+        ],
+        "UserData": { "Fn::Base64": { "Fn::Join": [ "", [
+          "<script>", "\n",
+          "cfn-init.exe -v -s ", { "Ref": "AWS::StackId" }, " -r MyEC2instance --region ", { "Ref": "AWS::Region" }, "\n",
+          "</script>", "\n"
+        ]]}}
+      },
+      "Metadata" : {
+        "AWS::CloudFormation::Init" : {
+          "config":{
+            "files":{
+              "c:\\cfn\\scripts\\Setup-config.ps1":{
+                "content":{
+                  "Fn::Join": ["", [
+                    "tzutil /s \"Tokyo Standard Time\"","\n",
+                    "Set-ItemProperty -Path \"HKLM:\\System\\CurrentControlSet\\Control\\TimeZoneInformation\" -Name \"RealTimeIsUniversal\" -Value 1","\n",
+                    "Get-NetFirewallProfile | Set-NetFirewallProfile -Enabled false",    "\n",
+                    "Set-ItemProperty -Path \"HKCU:\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Explorer\\Advanced\" -Name \"HideFileExt\" -Value 0",  "\n",
+                    "powercfg.exe -SETACTIVE 8c5e7fda-e8bf-4a96-9a85-a6e23a8c635c","\n",
+                    "$admin = \"HKLM:\\SOFTWARE\\Microsoft\\Active Setup\\Installed Components\\{A509B1A7-37EF-4b3f-8CFC-4F3A74704073}\"","\n",
+                    "$user = \"HKLM:\\SOFTWARE\\Microsoft\\Active Setup\\Installed Components\\{A509B1A8-37EF-4b3f-8CFC-4F3A74704073}\"", "\n",
+                    "Set-ItemProperty -Path $admin -Name \"IsInstalled\" -Value 0 -Force","\n",
+                    "Set-ItemProperty -Path $user -Name \"IsInstalled\" -Value 0 -Force","\n",
+                    "Remove-ItemProperty -Path $admin -Name \"IsInstalled\" -Force","\n",
+                    "Remove-ItemProperty -Path $user -Name \"IsInstalled\" -Force","\n"]]
+              }
+            },
+            "c:\\cfn\\scripts\\Setup-AWSCLI.ps1":{
+              "content":{
+                "Fn::Join": ["", [
+                  "$msiSource = 'https://awscli.amazonaws.com/AWSCLIV2.msi'","\n",
+                  "$msiOutPath = Join-Path $env:TEMP 'AWSCLIV2.msi'","\n",
+                  "Invoke-WebRequest -Uri $msiSource -OutFile $msiOutPath","\n",
+                  "$params = @{","\n",
+                  "  FilePath     = 'msiexec.exe';","\n",
+                  "  ArgumentList = @('/i', $msiOutPath, '/passive');","\n",
+                  "  Wait         = $true;","\n",
+                  "  PassThru     = $true;","\n",
+                  "}","\n",
+                  "Start-Process @params","\n"]]
+            }
+          }            
+          },
+          "commands":{
+            "1":{
+              "command":"powershell.exe -File c:\\cfn\\scripts\\Setup-config.ps1"
+            },
+            "2":{
+              "command":"powershell.exe -File c:\\cfn\\scripts\\Setup-AWSCLI.ps1"
+            }
+          }
+        }
+      }
+    }
+  }
+  }
+}

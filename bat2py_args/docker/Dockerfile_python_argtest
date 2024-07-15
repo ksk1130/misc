@@ -1,0 +1,44 @@
+FROM python:3.9-slim
+
+# docker build で --build-argで指定しなければx86_64のAWSCLIをDL
+ARG CPU_ARCH="x86_64"
+
+# インストールに必要な資材の導入
+RUN apt-get update -y && apt-get upgrade -y \
+    && apt-get -y install curl unzip less jq \
+       tzdata locales \
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# インストール
+RUN curl "https://awscli.amazonaws.com/awscli-exe-linux-${CPU_ARCH}.zip" -o "awscliv2.zip" \
+    &&  unzip awscliv2.zip \
+    && ./aws/install -i /usr/local/aws-cli -b /usr/local/bin \
+    && aws --version
+
+# 後始末
+RUN rm /awscliv2.zip && rm -rf /aws
+
+# 作業の準備
+RUN locale-gen ja_JP.UTF-8
+ENV TZ Asia/Tokyo
+ENV LANG ja_JP.UTF-8
+ENV LANGUAGE ja_JP:ja
+RUN mkdir -p /work/
+WORKDIR /work
+#COPY argtest.py /work/
+
+RUN echo "#!/usr/local/bin/python3"                        > /work/argtest.py
+RUN echo ""                                               >> /work/argtest.py
+RUN echo "import sys"                                     >> /work/argtest.py
+RUN echo ""                                               >> /work/argtest.py
+RUN echo "if __name__ == '__main__':"                     >> /work/argtest.py
+RUN echo "    print('len_args:%s' % len(sys.argv))"       >> /work/argtest.py
+RUN echo ""                                               >> /work/argtest.py
+RUN echo "    i = 0"                                      >> /work/argtest.py
+RUN echo "    for i in range(0, len(sys.argv), 1):"       >> /work/argtest.py
+RUN echo "        print('arg[%s]:%s' % (i, sys.argv[i]))" >> /work/argtest.py
+
+RUN chmod 755 /work/*.py
+
+ENTRYPOINT [ "python3", "argtest.py" ]

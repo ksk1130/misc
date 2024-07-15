@@ -1,0 +1,21 @@
+# 文字から16進コード
+PS C:\Users\hoge\Documents\dockerfiles\python38_kaimonomemo> [System.Text.Encoding]::UTF8.GetBytes("あ") | %{$_.ToString("X2")}
+E3
+81
+82
+
+# OK
+[System.Text.Encoding]::UTF8.GetString(@(0xE3))
+[System.Text.Encoding]::UTF8.GetString(@(0x81))
+[System.Text.Encoding]::UTF8.GetString(@(0x82))
+
+# バイト配列を UTF-8 文字列にする
+function Byte2String( $Byte ){
+    $String = [System.Text.Encoding]::UTF8.GetString($Byte)
+    return $String
+}
+
+ INFO:__init__:Login \xe3\x83\xa6\xe3\x83\xbc\xe3\x82\xb6\xe5\x90\x8d:\xe3\x81\x91\xe3\x81\x84 \xe3\x83\xa6\xe3\x83\xbc\xe3\x82\xb6ID:1,
+
+
+\xe3\x83\xa6\xe3\x83\xbc\xe3\x82\xb6\xe5\x90\x8d

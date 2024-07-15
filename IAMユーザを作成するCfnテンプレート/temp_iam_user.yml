@@ -1,0 +1,19 @@
+Resources:
+  MyIAMUser:
+    Type: "AWS::IAM::User"
+    Properties:
+      UserName: "iam-readonly-temp-user"
+      Policies:
+        - PolicyName: "ReadOnlyAccess"
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+            - Effect: "Allow"
+              Action:
+                - "iam:UpdateUser"
+              Resource: "*"
+            - Effect: "Allow"
+              Action:
+                - "iam:Get*"
+                - "iam:List*"
+              Resource: "*"
