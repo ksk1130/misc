@@ -1,0 +1,99 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+# このテンプレートはVPCとパブリックサブネットを作成し、インターネットから接続可能なEC2インスタンスを作成します。
+# 目的：VPN経由でのCIFSマウントの検証用
+
+# パラメータ
+Parameters:
+  # 接続を許可するインターネット側のCIDRブロック
+  AllowedCidrBlock:
+    Type: String
+    Default: 10.0.0.0/16
+
+Resources:
+
+  # VPC
+  CfVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+
+  # パブリックサブネット
+  CfPublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.0.1.0/24
+      MapPublicIpOnLaunch: true
+      VpcId: !Ref CfVPC
+      AvailabilityZone: 
+        Fn::Select: 
+          - 0
+          - Fn::GetAZs: ""
+
+  # インターネットゲートウェイ
+  CfInternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  # VPCにインターネットゲートウェイをアタッチ
+  AttachCfInternetGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId : !Ref CfInternetGateway
+      VpcId: !Ref CfVPC
+
+  # ルートテーブル
+  CfRouteTableForPublicSubnet:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref CfVPC
+
+  # パブリックサブネットにルートテーブルをアタッチ
+  CfRouteForPublicSubnet:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref CfRouteTableForPublicSubnet
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref CfInternetGateway
+
+  # パブリックサブネットにルートテーブルをアタッチ
+  CfAssociateRouteTableForPublicSubnet:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref CfRouteTableForPublicSubnet
+      SubnetId: !Ref CfPublicSubnet
+
+  # キーペア
+  MyKey:
+    Type: AWS::EC2::KeyPair
+    Properties:
+      KeyName: key-verification-vpn
+
+  # EC2インスタンス(Windows Server 2022)
+  Ec2Win2022Jp:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0ccf1fea52470bfb0
+      InstanceType: t2.medium
+      KeyName: !Ref MyKey
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          DeleteOnTermination: "true"
+          SubnetId: !Ref CfPublicSubnet
+          GroupSet:
+            - !Ref SgforEc2Win2022Jp
+      Tags:
+        - Key: Name
+          Value: Ec2Win2022JpForVPNVerification
+
+  # セキュリティグループ
+  SgforEc2Win2022Jp:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable RDP access
+      SecurityGroupIngress:
+        - CidrIp: !Ref AllowedCidrBlock
+          FromPort: 3389
+          ToPort: 3389
+          IpProtocol: tcp
+      VpcId: !Ref CfVPC
