@@ -1,2 +1,4 @@
 コマンド.txt
 *.pem
+*.ppk
+error_log
