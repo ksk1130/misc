@@ -1,0 +1,110 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+# このテンプレートはVPCとパブリックサブネットを作成し、インターネットから接続可能なEC2インスタンスを作成します。
+# 目的：Cloudfront経由でのタイムアウトの検証用
+
+# パラメータ
+Parameters:
+  # 接続を許可するインターネット側のCIDRブロック
+  AllowedCidrBlock:
+    Type: String
+    Default: 10.0.0.0/16
+
+Resources:
+
+  # VPC
+  CfVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.1.0.0/16
+
+  # パブリックサブネット
+  CfPublicSubnet:
+    Type: AWS::EC2::Subnet
+    Properties:
+      CidrBlock: 10.1.1.0/24
+      MapPublicIpOnLaunch: true
+      VpcId: !Ref CfVPC
+      AvailabilityZone: 
+        Fn::Select: 
+          - 0
+          - Fn::GetAZs: ""
+
+  # インターネットゲートウェイ
+  CfInternetGateway:
+    Type: AWS::EC2::InternetGateway
+
+  # VPCにインターネットゲートウェイをアタッチ
+  AttachCfInternetGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      InternetGatewayId : !Ref CfInternetGateway
+      VpcId: !Ref CfVPC
+
+  # ルートテーブル
+  CfRouteTableForPublicSubnet:
+    Type: AWS::EC2::RouteTable
+    Properties:
+      VpcId: !Ref CfVPC
+
+  # パブリックサブネットにルートテーブルをアタッチ
+  CfRouteForPublicSubnet:
+    Type: AWS::EC2::Route
+    Properties:
+      RouteTableId: !Ref CfRouteTableForPublicSubnet
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref CfInternetGateway
+
+  # パブリックサブネットにルートテーブルをアタッチ
+  CfAssociateRouteTableForPublicSubnet:
+    Type: AWS::EC2::SubnetRouteTableAssociation
+    Properties:
+      RouteTableId: !Ref CfRouteTableForPublicSubnet
+      SubnetId: !Ref CfPublicSubnet
+
+  # キーペア
+  MyKey:
+    Type: AWS::EC2::KeyPair
+    Properties:
+      KeyName: key-verification-cloudfront
+
+  # EC2インスタンス(Amazon Linux 2)
+  Ec2AL2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0091f05e4b8ee6709
+      InstanceType: t2.micro
+      KeyName: !Ref MyKey
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: "true"
+          DeviceIndex: "0"
+          DeleteOnTermination: "true"
+          SubnetId: !Ref CfPublicSubnet
+          GroupSet:
+            - !Ref SgforEc2AL2SSH
+            - !Ref SgforEc2AL2Web
+      Tags:
+        - Key: Name
+          Value: Ec2AL2ForCfVerification
+
+  # セキュリティグループ
+  SgforEc2AL2SSH:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable SSH access
+      SecurityGroupIngress:
+        - CidrIp: !Ref AllowedCidrBlock
+          FromPort: 22
+          ToPort: 22
+          IpProtocol: tcp          
+      VpcId: !Ref CfVPC
+  SgforEc2AL2Web:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Enable HTTP access
+      SecurityGroupIngress:
+        - CidrIp: !Ref AllowedCidrBlock
+          FromPort: 80
+          ToPort: 80
+          IpProtocol: tcp
+      VpcId: !Ref CfVPC
