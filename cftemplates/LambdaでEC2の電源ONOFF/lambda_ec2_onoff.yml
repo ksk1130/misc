@@ -1,0 +1,99 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Parameters:
+  InstanceIds:
+    Type: 'String'
+    Description: 'EC2 instance IDs to control, separated by comma'
+    Default: 'i-0ba1418642fbbc50d,i-09ff5c59fb76469f3,i-007a020b0859a71e1'
+Resources:
+  LambdaExecutionRole:
+    Type: 'AWS::IAM::Role'
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: 'Allow'
+            Principal:
+              Service: 'lambda.amazonaws.com'
+            Action: 'sts:AssumeRole'
+      Policies:
+        - PolicyName: 'LambdaEC2ControlPolicy'
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: 'Allow'
+                Action:
+                  - 'ec2:StartInstances'
+                  - 'ec2:StopInstances'
+                  - 'ec2:DescribeInstances'
+                  - 'logs:CreateLogGroup'
+                  - 'logs:CreateLogStream'
+                  - 'logs:PutLogEvents'
+                Resource: '*'
+
+  ControlEC2InstancesFunction:
+    Type: 'AWS::Lambda::Function'
+    Properties:
+      FunctionName: 'EC2InstancesOnOff'
+      Handler: 'index.lambda_handler'
+      Role: !GetAtt LambdaExecutionRole.Arn
+      Code:
+        ZipFile: |
+          import boto3
+          import os
+
+          def lambda_handler(event, context):
+            ec2 = boto3.client('ec2')
+            instance_ids = os.environ['INSTANCE_IDS'].split(',')
+            action = event['action']
+            instances = ec2.describe_instances()["Reservations"]
+            for instance in instances:
+              for i in instance["Instances"]:
+                if i["InstanceId"] in instance_ids:
+                  status = i["State"]["Name"]
+                  if action == 'on' and status == 'stopped':
+                    ec2.start_instances(InstanceIds=[i["InstanceId"]])
+                    print('Starting instance:', i["InstanceId"])
+                  elif action == 'off' and status == 'running':
+                    ec2.stop_instances(InstanceIds=[i["InstanceId"]])
+                    print('Stopping instance:', i["InstanceId"])
+                  else:
+                    print('No action taken:', i['InstanceId'])    
+      Runtime: 'python3.13'
+      Timeout: 180
+      Environment:
+        Variables:
+          INSTANCE_IDS: !Ref InstanceIds  # Pass the instance IDs as an environment variable
+
+  EventBridgeRuleStart:
+    Type: 'AWS::Events::Rule'
+    Properties:
+      ScheduleExpression: 'cron(0 14 ? * FRI *)'
+      Targets:
+        - Arn: !GetAtt ControlEC2InstancesFunction.Arn
+          Id: 'TargetFunction'
+          Input: '{"action": "off"}'
+
+  EventBridgeRuleStop:
+    Type: 'AWS::Events::Rule'
+    Properties:
+      ScheduleExpression: 'cron(0 23 ? * SUN *)'
+      Targets:
+        - Arn: !GetAtt ControlEC2InstancesFunction.Arn
+          Id: 'TargetFunction'
+          Input: '{"action": "on"}'
+
+  PermissionForEventsToInvokeLambda:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !Ref ControlEC2InstancesFunction
+      Action: 'lambda:InvokeFunction'
+      Principal: 'events.amazonaws.com'
+      SourceArn: !GetAtt EventBridgeRuleStart.Arn
+
+  PermissionForEventsToInvokeLambda2:
+    Type: 'AWS::Lambda::Permission'
+    Properties:
+      FunctionName: !Ref ControlEC2InstancesFunction
+      Action: 'lambda:InvokeFunction'
+      Principal: 'events.amazonaws.com'
+      SourceArn: !GetAtt EventBridgeRuleStop.Arn
