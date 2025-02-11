@@ -1,0 +1,14 @@
+{
+    "name": "Python Dev Container",
+    "customizations": {
+        "settings": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance"
+            ]
+        }
+    },
+    "dockerFile": "Dockerfile",
+    "remoteUser": "vscode",
+    "postCreateCommand": "pip install -r requirements.txt"
+}
