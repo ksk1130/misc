@@ -6,7 +6,9 @@ services:
       context: .
       dockerfile: Dockerfile
     ports:
-      - "8051:8051"
+      - "8501:8501"
     restart: always
     environment:
-      - KB_ID={KB_ID}
+      - KB_ID=${KB_ID}
+    volumes:
+      - "~/.aws:/root/.aws"
