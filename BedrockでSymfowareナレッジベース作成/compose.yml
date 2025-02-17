@@ -1,12 +1,23 @@
 version: '3.8'
 
 services:
+  https-portal:
+    image: steveltn/https-portal:1
+    ports:
+      - '80:80'
+      - '443:443'
+    links:
+      - app
+    restart: always
+    environment:
+      DOMAINS: 'rag.k-hitorigoto.online -> http://app:8501'
+      STAGE: 'production' # Don't use production until staging works
+      WEBSOCKET: 'true'
+      # FORCE_RENEW: 'true'
   app:
     build:
       context: .
       dockerfile: Dockerfile
-    ports:
-      - "8501:8501"
     restart: always
     environment:
       - KB_ID=${KB_ID}
