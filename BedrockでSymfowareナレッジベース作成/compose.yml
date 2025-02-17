@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8051:8051"
+    restart: always
+    environment:
+      - KB_ID={KB_ID}
