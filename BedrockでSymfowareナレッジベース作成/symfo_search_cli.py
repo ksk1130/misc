@@ -2,6 +2,8 @@ import boto3
 import os
 import traceback
 from botocore.config import Config
+from datetime import datetime, timedelta
+import time
 
 config = Config(
     retries={
@@ -27,9 +29,11 @@ def search(modelName, query):
     print(modelId)
 
     if modelName.startswith('claude'):
-        CLIENT = boto3.client('bedrock-runtime', region_name=REGION, config=config)
+        CLIENT = boto3.client(
+            'bedrock-runtime', region_name=REGION, config=config)
     else:
-        CLIENT = boto3.client('bedrock-agent-runtime', region_name=REGION, config=config)
+        CLIENT = boto3.client('bedrock-agent-runtime',
+                              region_name=REGION, config=config)
 
     model_package_arn = f"arn:aws:bedrock:{REGION}::foundation-model/{modelId}"
 
@@ -118,5 +122,58 @@ def search(modelName, query):
         # スタックトレースを表示
         print(traceback.format_exc())
 
+
+def get_query_logs():
+    # boto3で、CloudWatch Logs Insightsにクエリを投げる
+    logs_client = boto3.client(
+        'logs', region_name='ap-northeast-1')  # リージョンを指定
+
+    query = """
+        fields input.inputBodyJson.inputText, @timestamp
+        | filter @logStream = "aws/bedrock/modelinvocations" and not isempty(input.inputBodyJson.inputText)
+        | sort @timestamp desc
+        | limit 20
+    """
+
+    response = logs_client.start_query(
+        logGroupName='/bedrodk/ModelCalledLog',  # ロググループ名を指定
+        startTime=int((datetime.now() - timedelta(days=7)).timestamp()
+                      * 1000),  # 開始時間を指定 (ミリ秒単位)
+        endTime=int(datetime.now().timestamp() * 1000),  # 終了時間を指定 (ミリ秒単位)
+        queryString=query
+    )
+
+    query_id = response['queryId']
+
+    # クエリ結果を取得
+    while True:
+        results = logs_client.get_query_results(queryId=query_id)
+        status = results['status']
+        if status == 'Complete':
+            break
+        time.sleep(1)  # 1秒待機
+
+    # 結果を表示
+    logs = []
+    for result in results['results']:
+        temp = {}
+        for field in result:
+            if field['field'] == 'input.inputBodyJson.inputText':
+                temp['value'] = field['value']
+            if field['field'] == '@timestamp':
+                # 日付文字列('2025-02-19 14:13:24.000')をUTCから日本時間に変換
+                temp['timestamp'] = datetime.strptime(
+                    field['value'], '%Y-%m-%d %H:%M:%S.%f') + timedelta(hours=9)
+                logs.append(temp)
+
+    # logsの重複を削除し、最新の10件を表示
+    logs = logs[:10]
+
+    return logs
+
+
 if __name__ == "__main__":
     print(search("claude", "Symfowareについて教えて"))
+
+    for log in get_query_logs():
+        print(log['timestamp'], log['value'])
