@@ -1,0 +1,14 @@
+{
+    "name": "Python Dev Container",
+    "customizations": {
+        "settings": {
+            "extensions": [
+                "ms-python.python",
+                "ms-python.vscode-pylance"
+            ]
+        }
+    },
+    "dockerComposeFile": "compose.yml",
+    "service": "workspace",
+    "workspaceFolder": "/workspace"
+}
