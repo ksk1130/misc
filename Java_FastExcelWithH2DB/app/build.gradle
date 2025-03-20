@@ -42,6 +42,7 @@ dependencies {
 
     // https://mvnrepository.com/artifact/org.projectlombok/lombok
     compileOnly 'org.projectlombok:lombok:1.18.36'
+    annotationProcessor 'org.projectlombok:lombok:1.18.36'
 
     // https://mvnrepository.com/artifact/com.h2database/h2
     implementation 'com.h2database:h2:2.3.232'
