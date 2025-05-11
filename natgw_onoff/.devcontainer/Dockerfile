@@ -2,7 +2,7 @@ FROM python:3.13-slim
 
 WORKDIR /app
 
-RUN apt-get update && apt-get install -y curl unzip
+RUN apt-get update && apt-get install -y curl unzip git
 RUN pip install --upgrade pip
 
 COPY .devcontainer/requirements.txt requirements.txt

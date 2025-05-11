@@ -10,5 +10,6 @@
     },
     "dockerComposeFile": "compose.yml",
     "service": "workspace",
-    "workspaceFolder": "/workspace"
+    "workspaceFolder": "/workspace",
+    "postStartCommand": "git config --global --add safe.directory ${containerWorkspaceFolder}"
 }

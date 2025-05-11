@@ -1,0 +1,152 @@
+Resources:
+  LambdaFunctionNatgwonoff:
+    UpdateReplacePolicy: "Delete"
+    Type: "AWS::Lambda::Function"
+    DeletionPolicy: "Delete"
+    Properties:
+      MemorySize: 128
+      Handler: "lambda_function.lambda_handler"
+      Code: 
+        ZipFile: |
+          # -*- coding:utf-8 -*-
+          import os
+          import sys
+          import boto3
+
+          client = boto3.client('ec2')
+
+          def start_natgw(Subnet, eip_id, is_production):
+              if(is_production == False):
+                  return "dummy_start_natgw"
+
+              response = client.create_nat_gateway(
+                  AllocationId=eip_id,
+                  SubnetId=Subnet
+              )
+              natid = response['NatGateway']['NatGatewayId']
+              client.get_waiter('nat_gateway_available').wait(NatGatewayIds=[natid])
+              print('start natgw')
+              return(natid)
+
+          def atatch_natgw(natgw, Subnet, is_production):
+              if(is_production == False):
+                  print("dummy_attach_route_table")
+                  return
+
+              filters = [{'Name': 'association.subnet-id', 'Values': [Subnet]}]
+              response = client.describe_route_tables(Filters=filters)
+              rtb = response['RouteTables'][0]['Associations'][0]['RouteTableId']
+              response = client.create_route(
+                  DestinationCidrBlock='0.0.0.0/0',
+                  NatGatewayId=natgw,
+                  RouteTableId=rtb
+              )
+              print('attached routetb')
+
+          def stop_natgw(Subnet, is_production):
+              if(is_production == False):
+                  return "dummy_stop_nat_gw"
+
+              filters = [{'Name': 'subnet-id', 'Values': [Subnet]},
+                         {'Name': 'state', 'Values': ['available']}]
+              response = client.describe_nat_gateways(Filters=filters)
+              natgw = response['NatGateways'][0]['NatGatewayId']
+              client.delete_nat_gateway(NatGatewayId=natgw)
+              print('stop natgw')
+
+          def detach_natgw(Subnet, is_production):
+              if(is_production == False):
+                  print("dummy_detach_route_table")
+                  return
+
+              filters = [{'Name': 'association.subnet-id', 'Values': [Subnet]}]
+              response = client.describe_route_tables(Filters=filters)
+              rtb = response['RouteTables'][0]['Associations'][0]['RouteTableId']
+              response = client.delete_route(
+                  DestinationCidrBlock='0.0.0.0/0',
+                  RouteTableId=rtb
+              )
+              print('detach routetb')
+
+          def lambda_handler(event, context):
+              natgw_state = event['natgw_state']
+              subnet_id = event['subnet_id']
+              eip_id = event['eip_id']
+
+              is_production = False
+              if('is_production' in event):
+                  is_production = event['is_production']
+                  if(is_production == 1):
+                      is_production = True
+
+              if (natgw_state.lower() == 'on'):
+                  natgw = start_natgw(subnet_id, eip_id, is_production)
+                  atatch_natgw(natgw, subnet_id, is_production)
+              elif (natgw_state.lower() == 'off'):
+                  detach_natgw(subnet_id, is_production)
+                  stop_natgw(subnet_id, is_production)
+              else:
+                  print('ON or OFFを指定してください')
+                  sys.exit(0).wait
+      Role:
+        Fn::GetAtt:
+        - "IAMRoleIAMRlambdanatgwonoff"
+        - "Arn"
+      FileSystemConfigs: []
+      FunctionName: "natgw_onoff"
+      Runtime: "python3.8"
+      LoggingConfig:
+        LogFormat: "Text"
+        LogGroup: "/aws/lambda/natgw_onoff"
+      EphemeralStorage:
+        Size: 512
+      Architectures:
+      - "x86_64"
+  IAMRoleIAMRlambdanatgwonoff:
+    UpdateReplacePolicy: "Delete"
+    Type: "AWS::IAM::Role"
+    DeletionPolicy: "Delete"
+    Properties:
+      Path: "/"
+      ManagedPolicyArns:
+      - Ref: "IAMManagedPolicyPolicyIAMPlambdanatgwonoff"
+      MaxSessionDuration: 3600
+      RoleName: "IAMR-lambda-natgw-onoff"
+      Description: "Allows Lambda functions to call AWS services on your behalf."
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Action: "sts:AssumeRole"
+          Effect: "Allow"
+          Principal:
+            Service: "lambda.amazonaws.com"
+  IAMManagedPolicyPolicyIAMPlambdanatgwonoff:
+    UpdateReplacePolicy: "Delete"
+    Type: "AWS::IAM::ManagedPolicy"
+    DeletionPolicy: "Delete"
+    Properties:
+      ManagedPolicyName: "IAMP-lambda-natgw-onoff"
+      Path: "/"
+      Description: ""
+      Groups: []
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+        - Resource: "*"
+          Action:
+          - "logs:CreateLogStream"
+          - "ec2:DescribeAddresses"
+          - "ec2:CreateNatGateway"
+          - "ec2:CreateRoute"
+          - "ec2:DeleteRoute"
+          - "ec2:DeleteNatGateway"
+          - "ec2:DescribeNatGateways"
+          - "ec2:DescribeRouteTables"
+          - "logs:CreateLogGroup"
+          - "logs:PutLogEvents"
+          - "ec2:AllocateAddress"
+          Effect: "Allow"
+          Sid: "VisualEditor0"
+      Roles:
+      - "IAMR-lambda-natgw-onoff"
+      Users: []

@@ -9,4 +9,5 @@ services:
             PYTHONPATH: /workspace
         volumes:
             - ../src:/workspace
+            - ../.git:/workspace/.git # .gitディレクトリを共有
         command: sleep infinity
