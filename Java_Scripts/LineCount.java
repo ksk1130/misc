@@ -7,6 +7,17 @@ import java.io.UncheckedIOException;
 
 /**
  * ファイルの行数をカウントするプログラム
+ * このプログラムは、指定されたファイルを複数のエンコーディングで読み込み、
+ * 行数をカウントします。
+ * 対応するエンコーディングは以下の通りです:
+ * - UTF-8
+ * - Shift_JIS
+ * - EUC-JP
+ * - ISO-2022-JP
+ * * コマンドライン引数でファイルパスを指定してください。
+ * Java 11以降では、コンパイルをせずに直接実行できます。
+ * 例:
+ * java LineCount sample.txt
  */
 public class LineCount {
     private static String[] ENCODINGS = new String[] { "UTF-8", "Shift_JIS", "EUC-JP", "ISO-2022-JP" };
